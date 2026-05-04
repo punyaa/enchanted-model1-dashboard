@@ -281,11 +281,15 @@ State that this is AI-supported decision support only and that the final referra
 
 @st.cache_resource
 def get_bedrock_client():
-    session = boto3.Session(profile_name="enchanted-bedrock")
+    session = boto3.Session(
+        aws_access_key_id=st.secrets["AWS_ACCESS_KEY_ID"],
+        aws_secret_access_key=st.secrets["AWS_SECRET_ACCESS_KEY"],
+        region_name=st.secrets["AWS_DEFAULT_REGION"]
+    )
 
     return session.client(
         service_name="bedrock-runtime",
-        region_name="ap-southeast-1"
+        region_name=st.secrets["AWS_DEFAULT_REGION"]
     )
 
 def call_bedrock_llm(prompt: str) -> str:
