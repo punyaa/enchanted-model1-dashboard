@@ -387,6 +387,8 @@ The final AI-supported recommendation has already been derived from:
 - Predictive risk score: {row["risk_score"]}
 - Predictive risk band: {row["risk_band"]}
 
+For final AI-supported recommendation, give a clear recommendation on suitability for CH referral, based on the interpretation rules below.
+
 Apply the following interpretation rules strictly:
 - If the rule-based category is "Red - No-Go", explain that the patient is not suitable for CH referral at this stage due to rule-based exclusion criteria.
 - If the rule-based category is "Amber - Review Required" and the predictive risk band is "High Risk", explain that the patient is not suitable for immediate CH referral and requires priority clinical review. Do not describe this as a rule-based red flag exclusion.
