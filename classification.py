@@ -541,15 +541,15 @@ st.dataframe(
     styled_df,
     use_container_width=True,
     column_config={
-        "patient_id": st.column_config.TextColumn("Patient ID", width="medium"),
-        "encounter_id": st.column_config.TextColumn("Encounter ID", width="medium"),
-        "rule_category": st.column_config.TextColumn("Rule Category", width="large"),
+        "patient_id": st.column_config.TextColumn("Patient ID", width="small"),
+        "encounter_id": st.column_config.TextColumn("Encounter ID", width="small"),
+        "rule_category": st.column_config.TextColumn("Rule Category", width="medium"),
         "red_flags": st.column_config.ListColumn("Red Flags", width="large"),
         "amber_flags": st.column_config.ListColumn("Amber Flags", width="large"),
         "risk_score": st.column_config.NumberColumn("Risk Score", width="small", format="%.2f"),
         "risk_band": st.column_config.TextColumn("Risk Band", width="medium"),
         "ai_recommendation": st.column_config.TextColumn("AI Recommendation", width="large"),
-        "llm_prompt": None
+        # "llm_prompt": None
     }
 )
 
