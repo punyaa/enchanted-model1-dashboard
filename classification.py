@@ -195,89 +195,25 @@ def risk_band(prob):
         return "Low Risk"
 
 
-def generate_basic_explanation(row):
-    reasons = []
+# def generate_basic_explanation(row):
+#     reasons = []
 
-    if row["news2"] > 0:
-        reasons.append(f"NEWS2 score is {row['news2']}")
+#     if row["news2"] > 0:
+#         reasons.append(f"NEWS2 score is {row['news2']}")
 
-    if row["oxygen_flow_rate"] > 0:
-        reasons.append(f"Patient is on oxygen flow {row['oxygen_flow_rate']} L/min")
+#     if row["oxygen_flow_rate"] > 0:
+#         reasons.append(f"Patient is on oxygen flow {row['oxygen_flow_rate']} L/min")
 
-    if row["spo2"] < 96:
-        reasons.append(f"SpO2 is {row['spo2']}%")
+#     if row["spo2"] < 96:
+#         reasons.append(f"SpO2 is {row['spo2']}%")
 
-    if row["pending_surgery_flag"] == 1:
-        reasons.append("Patient has pending surgery")
+#     if row["pending_surgery_flag"] == 1:
+#         reasons.append("Patient has pending surgery")
 
-    if not reasons:
-        return "Patient appears clinically stable based on available screening parameters."
+#     if not reasons:
+#         return "Patient appears clinically stable based on available screening parameters."
 
-    return "Key factors: " + "; ".join(reasons)
-
-
-def build_llm_prompt(row):
-    """
-    Builds a safe prompt for the LLM explanation layer.
-    The LLM should only summarise provided structured data.
-    """
-
-    prompt = f"""
-Summary of patient's clinical screening and AI risk assessment:
-
-Patient ID: {row["patient_id"]}
-Encounter ID: {row["encounter_id"]}
-
-Patient screening output:
-- Rule-based category: {row["rule_category"]}
-- Red flags: {row["red_flags"]}
-- Amber flags: {row["amber_flags"]}
-- Predictive risk score: {row["risk_score"]}
-- Predictive risk band: {row["risk_band"]}
-
-Key clinical values:
-- Age: {row["age"]}
-- COPD flag: {row["copd_flag"]}
-- Systolic BP: {row["systolic_bp"]}
-- Diastolic BP: {row["diastolic_bp"]}
-- Heart rate: {row["heart_rate"]}
-- Temperature: {row["temperature"]}
-- SpO2: {row["spo2"]}
-- Oxygen device: {row["oxygen_device"]}
-- Oxygen flow rate: {row["oxygen_flow_rate"]}
-- NEWS2: {row["news2"]}
-- Hb: {row["hb"]}
-- Platelet: {row["platelet"]}
-- ANC: {row["anc"]}
-- Sodium: {row["sodium"]}
-- Potassium: {row["potassium"]}
-- Pending surgery flag: {row["pending_surgery_flag"]}
-- Active procedure flag: {row["active_procedure_flag"]}
-- Active precaution flag: {row["active_precaution_flag"]}
-- Active IV medication flag: {row["active_iv_med_flag"]}
-
-AI-supported recommendation: {row["ai_recommendation"]}
-
-Please produce the response in this exact format:
-
-**1. Explanation of Screening Output**
-Provide a short explanation of why the patient received this screening output.
-
-**2. Key Review Points**
-List key points that the case manager or clinician should review.
-
-**3. Suggested Review Status**
-State whether the patient is:
-- Not recommended for CH referral screening at this stage based on rule-based red flag exclusion; or
-- Shortlisted for case manager review; or
-- Potential Community Hospital candidate for case manager review.
-
-Do not make a final transfer decision.
-
-**4. Clinical Decision Reminder**
-State that this is AI-supported decision support only and that the final referral / transfer decision remains with the case manager, clinician, and care team.
-"""
-    return prompt
+#     return "Key factors: " + "; ".join(reasons)
 
 @st.cache_resource
 def get_bedrock_client():
@@ -323,15 +259,6 @@ def call_bedrock_llm(prompt: str) -> str:
 
     except Exception as e:
         return f"Unexpected error calling Bedrock: {str(e)}"
-
-
-def generate_llm_explanation_placeholder(row):
-    """
-    Placeholder for future LLM explanation.
-    For now, this returns the prompt instead of calling an actual LLM.
-    """
-
-    return build_llm_prompt(row)
 
 
 # Load data
@@ -399,31 +326,105 @@ def ai_review_recommendation(row):
 
 shortlisted["ai_recommendation"] = shortlisted.apply(ai_review_recommendation, axis=1)
 
-def recommendation_band(row):
-    recommendation = row["ai_recommendation"]
 
-    if recommendation == "Not suitable for CH referral at this stage due to exclusion criteria":
-        return "Red"
+# def recommendation_band(row):
+    # recommendation = row["ai_recommendation"]
 
-    if recommendation == "Not suitable for immediate CH referral; priority clinical review needed":
-        return "Red"
+    # if recommendation == "Not suitable for CH referral at this stage due to exclusion criteria":
+    #     return "Red"
 
-    if recommendation == "Further clinical review before CH referral":
-        return "Amber"
+    # if recommendation == "Not suitable for immediate CH referral; priority clinical review needed":
+    #     return "Red"
 
-    if recommendation == "CH referral review":
-        return "Green"
+    # if recommendation == "Further clinical review before CH referral":
+    #     return "Amber"
 
-    return "Grey"
+    # if recommendation == "CH referral review":
+    #     return "Green"
+
+    # return "Grey"
 
 
-shortlisted["recommendation_band"] = shortlisted.apply(
-    recommendation_band,
-    axis=1
-)
+# shortlisted["recommendation_band"] = shortlisted.apply(
+#     recommendation_band,
+#     axis=1
+# )
+
+
+def generate_llm_explanation_placeholder(row):
+    """
+    Placeholder for future LLM explanation.
+    For now, this returns the prompt instead of calling an actual LLM.
+    """
+
+    return build_llm_prompt(row)
 
 # Generate explanation / LLM prompt
 shortlisted["llm_prompt"] = shortlisted.apply(generate_llm_explanation_placeholder, axis=1)
+
+
+def build_llm_prompt(row):
+    """
+    Builds a safe prompt for the LLM explanation layer.
+    The LLM should only summarise provided structured data.
+    """
+
+    prompt = f"""
+Summary of patient's clinical screening and AI risk assessment:
+
+Patient ID: {row["patient_id"]}
+Encounter ID: {row["encounter_id"]}
+
+Patient screening output:
+- Rule-based category: {row["rule_category"]}
+- Red flags: {row["red_flags"]}
+- Amber flags: {row["amber_flags"]}
+- Predictive risk score: {row["risk_score"]}
+- Predictive risk band: {row["risk_band"]}
+
+Key clinical values:
+- Age: {row["age"]}
+- COPD flag: {row["copd_flag"]}
+- Systolic BP: {row["systolic_bp"]}
+- Diastolic BP: {row["diastolic_bp"]}
+- Heart rate: {row["heart_rate"]}
+- Temperature: {row["temperature"]}
+- SpO2: {row["spo2"]}
+- Oxygen device: {row["oxygen_device"]}
+- Oxygen flow rate: {row["oxygen_flow_rate"]}
+- NEWS2: {row["news2"]}
+- Hb: {row["hb"]}
+- Platelet: {row["platelet"]}
+- ANC: {row["anc"]}
+- Sodium: {row["sodium"]}
+- Potassium: {row["potassium"]}
+- Pending surgery flag: {row["pending_surgery_flag"]}
+- Active procedure flag: {row["active_procedure_flag"]}
+- Active precaution flag: {row["active_precaution_flag"]}
+- Active IV medication flag: {row["active_iv_med_flag"]}
+
+AI-supported recommendation: {row["ai_recommendation"]}
+
+Please produce the response in this exact format:
+
+**1. Explanation of Screening Output**
+Provide a short explanation of why the patient received this screening output.
+
+**2. Key Review Points**
+List key points that the case manager or clinician should review.
+
+**3. Suggested Review Status**
+State whether the patient is:
+- Not recommended for CH referral screening at this stage based on rule-based red flag exclusion; or
+- Shortlisted for case manager review; or
+- Potential Community Hospital candidate for case manager review.
+
+Do not make a final transfer decision.
+
+**4. Clinical Decision Reminder**
+State that this is AI-supported decision support only and that the final referral / transfer decision remains with the case manager, clinician, and care team.
+"""
+    return prompt
 
 
 st.title("ENCHANTED Model 1: CH Referral Screening Dashboard")
