@@ -387,7 +387,7 @@ The final AI-supported recommendation has already been derived from:
 - Predictive risk score: {row["risk_score"]}
 - Predictive risk band: {row["risk_band"]}
 
-For final AI-supported recommendation, give a clear recommendation on suitability for CH referral, based on the interpretation rules below.
+For final AI-supported recommendation, give a clear recommendation on suitability for Community Hospital(CH) referral, based on the interpretation rules below.
 
 Apply the following interpretation rules strictly:
 - If the rule-based category is "Red - No-Go", explain that the patient is not suitable for CH referral at this stage due to rule-based exclusion criteria.
