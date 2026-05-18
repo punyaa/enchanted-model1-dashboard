@@ -384,16 +384,16 @@ if eligible_mask.any():
 
 def ai_review_recommendation(row):
     if row["rule_category"] == "Red - No-Go":
-        return "Not recommended based on rule-based red flag exclusion"
+        return "AI does not suggest CH referral at this stage due to exclusion criteria"
 
     if row["risk_band"] == "High Risk":
-        return "Shortlisted but requires priority clinical review"
+        return "AI suggests not suitable for immediate CH referral; priority clinical review needed"
 
     if row["risk_band"] == "Medium Risk":
-        return "Shortlisted for case manager review"
+        return "AI suggests further clinical review before CH referral"
 
     if row["risk_band"] == "Low Risk":
-        return "Potential CH candidate for case manager review"
+        return "AI suggests CH referral review"
 
     return "Pending review"
 
