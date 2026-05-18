@@ -408,18 +408,25 @@ AI-supported recommendation: {row["ai_recommendation"]}
 Please produce the response in this exact format:
 
 **1. Explanation of Screening Output**
-Provide a short explanation of why the patient received this screening output.
+Provide a short explanation of why the patient received this screening output. Explain both:
+- the rule-based screening category; and
+- the predictive risk score / risk band from the machine learning model.
 
 **2. Key Review Points**
-List key points that the case manager or clinician should review.
+List key points that the case manager or clinician should review, based only on the clinical values provided above.
 
 **3. Suggested Review Status**
-State whether the patient is:
-- Not recommended for CH referral screening at this stage based on rule-based red flag exclusion; or
-- Shortlisted for case manager review; or
-- Potential Community Hospital candidate for case manager review.
+Use the AI-supported recommendation exactly as the suggested review status:
 
-Do not make a final transfer decision.
+AI-supported recommendation: {row["ai_recommendation"]}
+
+Apply the following interpretation rules strictly:
+- If the rule-based category is "Red - No-Go", explain that the patient is not suitable for CH referral at this stage due to rule-based exclusion criteria.
+- If the rule-based category is "Amber - Review Required" and the predictive risk band is "High Risk", explain that the patient is not suitable for immediate CH referral and requires priority clinical review. Do not describe this as a rule-based red flag exclusion.
+- If the rule-based category is "Amber - Review Required" and the predictive risk band is "Medium Risk", explain that further clinical review is needed before CH referral.
+- If the predictive risk band is "Low Risk", explain that the patient may proceed for CH referral review, subject to case manager / clinician assessment.
+- Do not invent red flag exclusions if the Red flags list is empty.
+- Do not make a final transfer decision.
 
 **4. Clinical Decision Reminder**
 State that this is AI-supported decision support only and that the final referral / transfer decision remains with the case manager, clinician, and care team.
