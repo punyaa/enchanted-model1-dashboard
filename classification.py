@@ -382,14 +382,10 @@ List key points that the case manager or clinician should review, based only on 
 **3. Final AI-Supported Review Recommendation**
 State the final AI-supported recommendation based on the combined rule-based screening output and machine learning risk stratification output.
 
-Final AI-supported recommendation: {row["ai_recommendation"]}
-
 The final AI-supported recommendation has already been derived from:
 - Rule-based screening category: {row["rule_category"]}
 - Predictive risk score: {row["risk_score"]}
 - Predictive risk band: {row["risk_band"]}
-
-Use the final AI-supported recommendation exactly as stated above. Do not replace it with a different recommendation.
 
 Apply the following interpretation rules strictly:
 - If the rule-based category is "Red - No-Go", explain that the patient is not suitable for CH referral at this stage due to rule-based exclusion criteria.
