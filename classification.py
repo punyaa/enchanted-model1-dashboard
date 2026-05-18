@@ -327,42 +327,6 @@ def ai_review_recommendation(row):
 shortlisted["ai_recommendation"] = shortlisted.apply(ai_review_recommendation, axis=1)
 
 
-# def recommendation_band(row):
-    # recommendation = row["ai_recommendation"]
-
-    # if recommendation == "Not suitable for CH referral at this stage due to exclusion criteria":
-    #     return "Red"
-
-    # if recommendation == "Not suitable for immediate CH referral; priority clinical review needed":
-    #     return "Red"
-
-    # if recommendation == "Further clinical review before CH referral":
-    #     return "Amber"
-
-    # if recommendation == "CH referral review":
-    #     return "Green"
-
-    # return "Grey"
-
-
-# shortlisted["recommendation_band"] = shortlisted.apply(
-#     recommendation_band,
-#     axis=1
-# )
-
-
-def generate_llm_explanation_placeholder(row):
-    """
-    Placeholder for future LLM explanation.
-    For now, this returns the prompt instead of calling an actual LLM.
-    """
-
-    return build_llm_prompt(row)
-
-# Generate explanation / LLM prompt
-shortlisted["llm_prompt"] = shortlisted.apply(generate_llm_explanation_placeholder, axis=1)
-
-
 def build_llm_prompt(row):
     """
     Builds a safe prompt for the LLM explanation layer.
@@ -432,6 +396,18 @@ Apply the following interpretation rules strictly:
 State that this is AI-supported decision support only and that the final referral / transfer decision remains with the case manager, clinician, and care team.
 """
     return prompt
+
+
+def generate_llm_explanation_placeholder(row):
+    """
+    Placeholder for future LLM explanation.
+    For now, this returns the prompt instead of calling an actual LLM.
+    """
+
+    return build_llm_prompt(row)
+
+# Generate explanation / LLM prompt
+shortlisted["llm_prompt"] = shortlisted.apply(generate_llm_explanation_placeholder, axis=1)
 
 
 st.title("ENCHANTED Model 1: CH Referral Screening Dashboard")
