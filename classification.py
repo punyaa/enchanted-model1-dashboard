@@ -379,10 +379,17 @@ Provide a short explanation of why the patient received this screening output. E
 **2. Key Review Points**
 List key points that the case manager or clinician should review, based only on the clinical values provided above.
 
-**3. Suggested Review Status**
-Use the AI-supported recommendation exactly as the suggested review status:
+**3. Final AI-Supported Review Recommendation**
+State the final AI-supported recommendation based on the combined rule-based screening output and machine learning risk stratification output.
 
-AI-supported recommendation: {row["ai_recommendation"]}
+Final AI-supported recommendation: {row["ai_recommendation"]}
+
+The final AI-supported recommendation has already been derived from:
+- Rule-based screening category: {row["rule_category"]}
+- Predictive risk score: {row["risk_score"]}
+- Predictive risk band: {row["risk_band"]}
+
+Use the final AI-supported recommendation exactly as stated above. Do not replace it with a different recommendation.
 
 Apply the following interpretation rules strictly:
 - If the rule-based category is "Red - No-Go", explain that the patient is not suitable for CH referral at this stage due to rule-based exclusion criteria.
@@ -390,10 +397,10 @@ Apply the following interpretation rules strictly:
 - If the rule-based category is "Amber - Review Required" and the predictive risk band is "Medium Risk", explain that further clinical review is needed before CH referral.
 - If the predictive risk band is "Low Risk", explain that the patient may proceed for CH referral review, subject to case manager / clinician assessment.
 - Do not invent red flag exclusions if the Red flags list is empty.
-- Do not make a final transfer decision.
+- Do not make a final transfer or referral decision on behalf of the clinical team.
 
 **4. Clinical Decision Reminder**
-State that this is AI-supported decision support only and that the final referral / transfer decision remains with the case manager, clinician, and care team.
+State that the final AI-supported recommendation is advisory only. The final referral / transfer decision remains with the case manager, clinician, and care team.
 """
     return prompt
 
