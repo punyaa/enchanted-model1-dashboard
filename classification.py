@@ -508,7 +508,7 @@ display_cols = [
     "risk_score",
     "risk_band",
     "ai_recommendation",
-    "recommendation_band",
+    # "recommendation_band",
     # "llm_prompt"
 ]
 
@@ -517,13 +517,13 @@ display_cols = [
 def colour_rule_category(value):
     # Rule category colours
     if value == "Green - Potential Candidate":
-        return "background-color: #d4edda; color: #155724; font-weight: bold;"
+        return "background-color: #d4edda; color: #155724;"
 
     if value == "Amber - Review Required":
-        return "background-color: #fff3cd; color: #856404; font-weight: bold;"
+        return "background-color: #fff3cd; color: #856404;"
 
     if value == "Red - No-Go":
-        return "background-color: #f8d7da; color: #721c24; font-weight: bold;"
+        return "background-color: #f8d7da; color: #721c24;"
 
     # AI recommendation colours
     if value == "CH referral review":
