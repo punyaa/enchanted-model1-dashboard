@@ -9,6 +9,7 @@ import streamlit as st
 import boto3
 from botocore.exceptions import ClientError
 import datetime
+from pandas.errors import EmptyDataError
 
 # Streamlit dashboard
 st.set_page_config(page_title="ENCHANTED Model 1", layout="wide")
@@ -614,11 +615,13 @@ if st.button("Submit Review Decision"):
 
     try:
         existing_log = pd.read_csv(review_log_path)
+
         updated_log = pd.concat(
             [existing_log, pd.DataFrame([review_record])],
             ignore_index=True
         )
-    except FileNotFoundError:
+
+    except (FileNotFoundError, EmptyDataError):
         updated_log = pd.DataFrame([review_record])
 
     updated_log.to_csv(review_log_path, index=False)
@@ -628,8 +631,13 @@ if st.button("Submit Review Decision"):
 if st.checkbox("Show submitted review log"):
     try:
         review_log = pd.read_csv("case_manager_review_log.csv")
-        st.dataframe(review_log, use_container_width=True)
-    except FileNotFoundError:
+
+        if review_log.empty:
+            st.info("No review decisions have been submitted yet.")
+        else:
+            st.dataframe(review_log, use_container_width=True)
+
+    except (FileNotFoundError, EmptyDataError):
         st.info("No review decisions have been submitted yet.")
 
 st.write("### LLM Prompt")
