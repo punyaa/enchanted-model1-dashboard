@@ -547,11 +547,11 @@ def generate_llm_explanation_placeholder(row):
 shortlisted["llm_prompt"] = shortlisted.apply(generate_llm_explanation_placeholder, axis=1)
 
 
-st.title("ENCHANTED Model 1: CH Referral Screening Dashboard")
-st.subheader("Rule-Based Screening and AI-Supported Risk Stratification")
+st.title("ENCHANTED Model 1: Right-Siting Decision Support Dashboard")
+st.subheader("Rule-Based Screening, AI Risk Stratification and Right-Siting Review Support")
 
 st.caption(
-    "For demonstration using sample data. Final referral and transfer decisions remain with the clinical care team."
+    "For demonstration using sample data. Final right-siting, referral and transfer decisions remain with the clinical care team."
 )
 
 st.markdown(
@@ -566,11 +566,13 @@ st.markdown(
         margin-bottom: 20px;
     ">
         <div style="font-size: 18px; font-weight: 700; color: #0b3a66;">
-            Acute-to-Community Hospital Referral Decision Support
+            Acute-to-Community Hospital / Hospital-at-Home Right-Siting Support
         </div>
         <div style="font-size: 14px; color: #475569; margin-top: 6px;">
-            This dashboard combines rule-based clinical screening with AI-supported risk stratification to assist
-            case managers and clinicians in reviewing potential Community Hospital referral candidates.
+        This dashboard combines rule-based clinical screening, AI-supported risk stratification,
+        service suitability, nursing assessment and acceptance considerations to assist case managers
+        and clinicians in reviewing the appropriate care pathway, including Community Hospital review,
+        Hospital-at-Home review, further review, or continued acute hospital care.
         </div>
     </div>
     """,
@@ -597,6 +599,11 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+st.subheader("Rule-Based Clinical Screening Summary")
+st.caption(
+    "Patients are first classified into Red, Amber, or Green categories based on clinical exclusion and review criteria before AI-supported risk stratification is applied."
+)
+
 # Summary metrics
 total_patients = len(shortlisted)
 red_count = (shortlisted["rule_category"] == "Red - No-Go").sum()
@@ -611,6 +618,11 @@ col3.metric("Amber / Review", amber_count)
 col4.metric("Green / Candidate", green_count)
 
 st.divider()
+
+st.subheader("AI-Suggested Review Pathway Summary")
+st.caption(
+    "Shows the suggested review pathway for patients based on clinical screening, risk stratification, service suitability, nursing assessment, and acceptance considerations. Final right-siting decisions remain with the clinical team."
+)
 
 ch_review_count = (
     shortlisted["right_siting_recommendation"] == "Community Hospital review"
