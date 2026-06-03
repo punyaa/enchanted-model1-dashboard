@@ -187,6 +187,53 @@ def rule_based_screening(row):
     return category, red_flags, amber_flags
 
 
+def nursing_operational_assessment(row):
+    nursing_flags = []
+
+    if row["isolation_requirement"] == "Airborne":
+        nursing_flags.append("Airborne isolation requirement")
+
+    if row["infectious_status"] == "Active infection":
+        nursing_flags.append("Active infectious concern")
+
+    if row["wound_care_need"] == "Complex":
+        nursing_flags.append("Complex wound care")
+
+    if row["behavioural_concern_flag"] == 1:
+        nursing_flags.append("Behavioural concern")
+
+    if row["nursing_complexity"] == "High":
+        nursing_flags.append("High nursing complexity")
+
+    if row["social_support_concern"] == 1:
+        nursing_flags.append("Social support concern")
+
+    if "Airborne isolation requirement" in nursing_flags:
+        nursing_status = "Nursing Not Suitable"
+    elif nursing_flags:
+        nursing_status = "Nursing Review Required"
+    else:
+        nursing_status = "Nursing Suitable"
+
+    return nursing_status, nursing_flags
+    
+def service_suitability_assessment(row):
+    suitable_services = [
+        "Rehabilitation",
+        "Long-term IV antibiotics",
+        "Wound care",
+        "Nursing care",
+        "Lower-acuity monitoring"
+    ]
+
+    if row["service_need"] in suitable_services:
+        return "JCH Service Suitable"
+
+    if row["service_need"] == "Specialist acute monitoring":
+        return "Service Not Suitable for JCH"
+
+    return "Service Suitability Unclear"
+
 def risk_band(prob):
     if prob >= 0.30:
         return "High Risk"
@@ -281,6 +328,16 @@ shortlisted[["rule_category", "red_flags", "amber_flags"]] = shortlisted.apply(
     axis=1
 )
 
+shortlisted[["nursing_status", "nursing_flags"]] = shortlisted.apply(
+    lambda row: pd.Series(nursing_operational_assessment(row)),
+    axis=1
+)
+
+shortlisted["service_suitability"] = shortlisted.apply(
+    service_suitability_assessment,
+    axis=1
+)
+
 MODEL_PATH = "models/enchanted_model1_random_forest.joblib"
 
 @st.cache_resource
@@ -310,18 +367,73 @@ if eligible_mask.any():
     ].apply(risk_band)
 
 
-def ai_review_recommendation(row):
+def right_siting_recommendation(row):
+    # Hard stop: clinically not suitable
     if row["rule_category"] == "Red - No-Go":
-        return "Not suitable for CH referral at this stage due to exclusion criteria"
+        return "Continue Acute Hospital care"
 
-    if row["risk_band"] == "High Risk":
-        return "Not suitable for immediate CH referral; priority clinical review needed"
+    # Hard stop: service unavailable
+    if row["service_suitability"] == "Service Not Suitable for JCH":
+        return "Continue Acute Hospital care"
 
-    if row["risk_band"] == "Medium Risk":
-        return "Further clinical review before CH referral"
+    # Nursing hard stop
+    if row["nursing_status"] == "Nursing Not Suitable":
+        return "Continue Acute Hospital care"
 
-    if row["risk_band"] == "Low Risk":
-        return "CH referral review"
+    # Possible Hospital-at-Home pathway
+    if (
+        row["service_need"] in ["Long-term IV antibiotics", "Lower-acuity monitoring"]
+        and row["nursing_complexity"] == "Low"
+        and row["patient_acceptance_likelihood"] in ["High", "Medium"]
+        and row["rule_category"] != "Red - No-Go"
+    ):
+        return "Hospital-at-Home review"
+
+    # Community Hospital pathway
+    if (
+        row["service_suitability"] == "JCH Service Suitable"
+        and row["nursing_status"] == "Nursing Suitable"
+        and row["risk_band"] in ["Low Risk", "Medium Risk"]
+    ):
+        return "Community Hospital review"
+
+    # Borderline cases
+    return "Further clinical / nursing review required"
+
+shortlisted["right_siting_recommendation"] = shortlisted.apply(
+    right_siting_recommendation,
+    axis=1
+)
+
+# def ai_review_recommendation(row):
+#     if row["rule_category"] == "Red - No-Go":
+#         return "Not suitable for CH referral at this stage due to exclusion criteria"
+
+#     if row["risk_band"] == "High Risk":
+#         return "Not suitable for immediate CH referral; priority clinical review needed"
+
+#     if row["risk_band"] == "Medium Risk":
+#         return "Further clinical review before CH referral"
+
+#     if row["risk_band"] == "Low Risk":
+#         return "CH referral review"
+
+#     return "Pending review"
+
+def ai_review_recommendation(row):
+    if row["right_siting_recommendation"] == "Continue Acute Hospital care":
+        return "Continue Acute Hospital care; not suitable for immediate CH transfer"
+
+    if row["right_siting_recommendation"] == "Hospital-at-Home review":
+        return "Consider Hospital-at-Home review"
+
+    if row["right_siting_recommendation"] == "Community Hospital review":
+        if row["patient_acceptance_likelihood"] == "Low":
+            return "Community Hospital review; counselling likely required"
+        return "Community Hospital referral review"
+
+    if row["right_siting_recommendation"] == "Further clinical / nursing review required":
+        return "Further clinical / nursing review required before right-siting decision"
 
     return "Pending review"
 
@@ -368,7 +480,15 @@ Key clinical values:
 - Active precaution flag: {row["active_precaution_flag"]}
 - Active IV medication flag: {row["active_iv_med_flag"]}
 
-AI-supported recommendation: {row["ai_recommendation"]}
+Service / nursing / acceptance assessment:
+- Service need: {row["service_need"]}
+- Service suitability: {row["service_suitability"]}
+- Nursing status: {row["nursing_status"]}
+- Nursing flags: {row["nursing_flags"]}
+- Patient acceptance likelihood: {row["patient_acceptance_likelihood"]}
+- Counselling required: {row["counselling_required"]}
+- Right-siting recommendation: {row["right_siting_recommendation"]}
+
 
 Please produce the response in this exact format:
 
@@ -380,8 +500,19 @@ Provide a short explanation of why the patient received this screening output. E
 **2. Key Review Points**
 List key points that the case manager or clinician should review, based only on the clinical values provided above.
 
-**3. Final AI-Supported Review Recommendation**
-State the final AI-supported recommendation based on the combined rule-based screening output and machine learning risk stratification output.
+**3. Final AI-Supported Right-Siting Recommendation**
+Explain the final AI-supported recommendation based on:
+- clinical screening;
+- predictive risk band;
+- service suitability;
+- nursing / operational assessment;
+- acceptance / counselling needs;
+- right-siting recommendation.
+
+Use the final AI-supported recommendation exactly as stated:
+{row["ai_recommendation"]}
+
+Do not make a final transfer decision. The final decision remains with the clinical team.
 
 The final AI-supported recommendation has already been derived from:
 - Rule-based screening category: {row["rule_category"]}
@@ -481,6 +612,31 @@ col4.metric("Green / Candidate", green_count)
 
 st.divider()
 
+ch_review_count = (
+    shortlisted["right_siting_recommendation"] == "Community Hospital review"
+).sum()
+
+hah_review_count = (
+    shortlisted["right_siting_recommendation"] == "Hospital-at-Home review"
+).sum()
+
+acute_care_count = (
+    shortlisted["right_siting_recommendation"] == "Continue Acute Hospital care"
+).sum()
+
+further_review_count = (
+    shortlisted["right_siting_recommendation"] == "Further review required"
+).sum()
+
+col5, col6, col7, col8 = st.columns(4)
+
+col5.metric("CH Review", ch_review_count)
+col6.metric("Hospital-at-Home Review", hah_review_count)
+col7.metric("Continue Acute Care", acute_care_count)
+col8.metric("Further Review", further_review_count)
+
+st.divider()
+
 # Display patient table
 st.subheader("Patient Screening Results")
 
@@ -488,6 +644,20 @@ def format_flags(flags):
     if isinstance(flags, list) and len(flags) > 0:
         return ", ".join(flags)
     return "-"
+
+# display_cols = [
+#     "patient_id",
+#     "encounter_id",
+#     "rule_category",
+#     "red_flags",
+#     "amber_flags",
+#     "risk_score",
+#     "risk_band",
+#     "ai_recommendation",
+#     # "recommendation_band",
+#     # "llm_prompt"
+# ]
+
 
 display_cols = [
     "patient_id",
@@ -497,9 +667,12 @@ display_cols = [
     "amber_flags",
     "risk_score",
     "risk_band",
-    "ai_recommendation",
-    # "recommendation_band",
-    # "llm_prompt"
+    "service_suitability",
+    "nursing_status",
+    "patient_acceptance_likelihood",
+    "counselling_required",
+    "right_siting_recommendation",
+    "ai_recommendation"
 ]
 
 # st.dataframe(shortlisted[display_cols], use_container_width=True)
@@ -542,15 +715,19 @@ st.dataframe(
     styled_df,
     use_container_width=True,
     column_config={
-        "patient_id": st.column_config.TextColumn("Patient ID", width="small"),
-        "encounter_id": st.column_config.TextColumn("Encounter ID", width="small"),
-        "rule_category": st.column_config.TextColumn("Rule Category", width="medium"),
-        "red_flags": st.column_config.ListColumn("Red Flags", width="large"),
-        "amber_flags": st.column_config.ListColumn("Amber Flags", width="large"),
-        "risk_score": st.column_config.NumberColumn("Risk Score", width="small", format="%.2f"),
-        "risk_band": st.column_config.TextColumn("Risk Band", width="medium"),
-        "ai_recommendation": st.column_config.TextColumn("AI Recommendation", width="large"),
-        # "llm_prompt": None
+    "patient_id": st.column_config.TextColumn("Patient ID", width="medium"),
+    "encounter_id": st.column_config.TextColumn("Encounter ID", width="medium"),
+    "rule_category": st.column_config.TextColumn("Clinical Screening", width="large"),
+    "red_flags": st.column_config.ListColumn("Red Flags", width="large"),
+    "amber_flags": st.column_config.ListColumn("Amber Flags", width="large"),
+    "risk_score": st.column_config.NumberColumn("Risk Score", width="small", format="%.2f"),
+    "risk_band": st.column_config.TextColumn("Risk Band", width="medium"),
+    "service_suitability": st.column_config.TextColumn("Service Suitability", width="large"),
+    "nursing_status": st.column_config.TextColumn("Nursing Assessment", width="large"),
+    "patient_acceptance_likelihood": st.column_config.TextColumn("Acceptance Likelihood", width="medium"),
+    "counselling_required": st.column_config.TextColumn("Counselling Required", width="medium"),
+    "right_siting_recommendation": st.column_config.TextColumn("Right-Siting Recommendation", width="large"),
+    "ai_recommendation": st.column_config.TextColumn("AI Recommendation", width="large"),
     }
 )
 
@@ -580,14 +757,33 @@ st.write(f"**Predictive risk band:** {patient_row['risk_band']}")
 st.write(f"**AI-supported recommendation:** *{patient_row['ai_recommendation']}*")
 
 st.write("### Case Manager / Clinician Review")
+st.write("### Service Suitability")
+st.write(f"**Service need:** {patient_row['service_need']}")
+st.write(f"**Service suitability:** {patient_row['service_suitability']}")
+
+st.write("### Nursing / Operational Assessment")
+st.write(f"**Nursing status:** {patient_row['nursing_status']}")
+st.write(f"**Nursing flags:** {patient_row['nursing_flags']}")
+
+st.write("### Acceptance / Counselling Assessment")
+st.write(f"**Patient acceptance likelihood:** {patient_row['patient_acceptance_likelihood']}")
+st.write(f"**Counselling required:** {patient_row['counselling_required']}")
+
+st.write("### Right-Siting Recommendation")
+st.write(f"**Recommended care setting:** {patient_row['right_siting_recommendation']}")
+st.write(f"**AI-supported recommendation:** *{patient_row['ai_recommendation']}*")
 
 final_decision = st.selectbox(
-    "Final referral decision",
+    "Final right-siting decision",
     [
         "Pending Review",
-        "Suitable for CH Referral",
-        "Not Suitable for CH Referral",
-        "Requires Further Clinical Clarification"
+        "Proceed with Community Hospital Referral",
+        "Consider Hospital-at-Home",
+        "Continue Acute Hospital Care",
+        "Requires Further Clinical Review",
+        "Requires Further Nursing Review",
+        "Patient / Family Counselling Required",
+        "Not Suitable for Transfer"
     ]
 )
 
