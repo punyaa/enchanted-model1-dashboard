@@ -617,8 +617,6 @@ col2.metric("Red / No-Go", red_count)
 col3.metric("Amber / Review", amber_count)
 col4.metric("Green / Candidate", green_count)
 
-st.divider()
-
 st.subheader("AI-Suggested Review Pathway Summary")
 st.caption(
     "Shows the suggested review pathway for patients based on clinical screening, risk stratification, service suitability, nursing assessment, and acceptance considerations. Final right-siting decisions remain with the clinical team."
