@@ -10,8 +10,11 @@ This module owns everything the user sees or clicks:
 - audit log and LLM explanation screen
 """
 
+import html
+
 import pandas as pd
 import streamlit as st
+from pandas.api.types import is_list_like
 
 from app.auth import logout_user, render_auth_gate
 from app.backend import (
@@ -58,8 +61,8 @@ def configure_page():
         """
         <style>
         .stApp {
-            background: linear-gradient(135deg, #f7fbff 0%, #eef6fb 45%, #f8fafc 100%);
-            color: #1f2937;
+            background: #f8fafc;
+            color: #111827;
         }
 
         .block-container {
@@ -69,22 +72,22 @@ def configure_page():
         }
 
         h1 {
-            color: #0b3a66;
+            color: #0f172a;
             font-weight: 800;
-            letter-spacing: -0.5px;
+            letter-spacing: 0;
         }
 
         h2, h3 {
-            color: #1f4e79;
+            color: #1e293b;
             font-weight: 700;
         }
 
         div[data-testid="stMetric"] {
-            background: rgba(255, 255, 255, 0.88);
-            border: 1px solid #dbeafe;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
             padding: 18px;
-            border-radius: 16px;
-            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+            border-radius: 8px;
+            box-shadow: none;
         }
 
         div[data-testid="stMetric"] label,
@@ -140,10 +143,164 @@ def configure_page():
         }
 
         div[data-testid="stDataFrame"] {
-            background: white;
-            border-radius: 14px;
-            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+            background: #ffffff !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 8px;
+            box-shadow: none;
             padding: 8px;
+        }
+
+        div[data-testid="stDataFrame"] * {
+            color-scheme: light !important;
+        }
+
+        div[data-testid="stDataFrame"] canvas,
+        div[data-testid="stDataFrame"] [role="grid"],
+        div[data-testid="stDataFrame"] [class*="data-grid"],
+        div[data-testid="stDataFrame"] [class*="glide"] {
+            background-color: #ffffff !important;
+            color: #111827 !important;
+        }
+
+        div[data-testid="stDataFrame"] [role="columnheader"],
+        div[data-testid="stDataFrame"] [role="gridcell"] {
+            color: #111827 !important;
+            background-color: #ffffff !important;
+        }
+
+        .filter-panel {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        .filter-panel-title {
+            color: #0f172a;
+            font-size: 18px;
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+
+        .readable-table-wrap {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            margin-top: 18px;
+            overflow-x: auto;
+            padding: 0;
+        }
+
+        .readable-table {
+            border-collapse: collapse;
+            width: 100%;
+            min-width: 1000px;
+            color: #111827;
+            font-size: 14px;
+        }
+
+        .readable-table th {
+            background: #f1f5f9;
+            border-bottom: 1px solid #cbd5e1;
+            color: #0f172a;
+            font-weight: 800;
+            padding: 12px 14px;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .readable-table td {
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            color: #111827;
+            font-weight: 600;
+            padding: 11px 14px;
+            vertical-align: top;
+        }
+
+        .readable-table tr:nth-child(even) td {
+            background: #f8fafc;
+        }
+
+        .readable-table tr:hover td {
+            background: #eef2ff;
+        }
+
+        .status-badge {
+            border-radius: 6px;
+            display: inline-block;
+            font-weight: 800;
+            padding: 5px 9px;
+            white-space: nowrap;
+        }
+
+        .status-green {
+            background: #dcfce7;
+            border: 1px solid #86efac;
+            color: #14532d;
+        }
+
+        .status-amber {
+            background: #fef3c7;
+            border: 1px solid #fcd34d;
+            color: #78350f;
+        }
+
+        .status-red {
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            color: #7f1d1d;
+        }
+
+        .status-neutral {
+            background: #e2e8f0;
+            border: 1px solid #cbd5e1;
+            color: #0f172a;
+        }
+
+        .table-empty {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            color: #475569;
+            font-weight: 700;
+            margin-top: 18px;
+            padding: 16px;
+        }
+
+        div[data-testid="stExpander"] {
+            background: #ffffff !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 8px !important;
+        }
+
+        div[data-testid="stExpander"] details,
+        div[data-testid="stExpander"] summary,
+        div[data-testid="stExpander"] div,
+        div[data-testid="stExpander"] p,
+        div[data-testid="stExpander"] label,
+        div[data-testid="stExpander"] span {
+            color: #111827 !important;
+        }
+
+        div[data-testid="stExpander"] summary {
+            background: #f1f5f9 !important;
+            border-radius: 8px !important;
+            padding: 0.5rem 0.75rem !important;
+        }
+
+        div[data-baseweb="popover"],
+        div[data-baseweb="menu"],
+        ul[role="listbox"] {
+            background: #ffffff !important;
+            color: #111827 !important;
+        }
+
+        div[data-baseweb="popover"] *,
+        div[data-baseweb="menu"] *,
+        ul[role="listbox"] * {
+            color: #111827 !important;
         }
 
         textarea {
@@ -171,10 +328,10 @@ def configure_page():
 
         .stMultiSelect div[data-baseweb="tag"],
         .stMultiSelect span[data-baseweb="tag"] {
-            background-color: #dbeafe !important;
-            border: 1px solid #93c5fd !important;
+            background-color: #e2e8f0 !important;
+            border: 1px solid #cbd5e1 !important;
             border-radius: 8px !important;
-            color: #172554 !important;
+            color: #0f172a !important;
             font-weight: 700 !important;
         }
 
@@ -182,8 +339,49 @@ def configure_page():
         .stMultiSelect span[data-baseweb="tag"] span,
         .stMultiSelect div[data-baseweb="tag"] svg,
         .stMultiSelect span[data-baseweb="tag"] svg {
-            color: #172554 !important;
-            fill: #172554 !important;
+            color: #0f172a !important;
+            fill: #0f172a !important;
+        }
+
+        div[data-testid="stTabs"] [role="tablist"] {
+            gap: 8px;
+            border-bottom: 1px solid #cbd5e1;
+            margin-bottom: 1rem;
+        }
+
+        div[data-testid="stTabs"] button[role="tab"] {
+            background: #e2e8f0 !important;
+            border: 1px solid #cbd5e1 !important;
+            border-bottom: none !important;
+            border-radius: 8px 8px 0 0 !important;
+            color: #0f172a !important;
+            padding: 10px 16px !important;
+            font-weight: 700 !important;
+        }
+
+        div[data-testid="stTabs"] button[role="tab"] p {
+            color: #0f172a !important;
+            font-weight: 700 !important;
+        }
+
+        div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] {
+            background: #0f172a !important;
+            border-color: #0f172a !important;
+            color: #ffffff !important;
+        }
+
+        div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] p {
+            color: #ffffff !important;
+        }
+
+        div[data-testid="stTabs"] button[role="tab"]:hover {
+            background: #cbd5e1 !important;
+            color: #0f172a !important;
+        }
+
+        div[data-testid="stTabs"] button[role="tab"][aria-selected="true"]:hover {
+            background: #1e293b !important;
+            color: #ffffff !important;
         }
 
         .stRadio div[role="radiogroup"] {
@@ -195,13 +393,13 @@ def configure_page():
         }
 
         div.stButton > button {
-            background: #0b3a66 !important;
+            background: #0f172a !important;
             color: #ffffff !important;
-            border: 1px solid #0b3a66 !important;
-            border-radius: 10px;
+            border: 1px solid #0f172a !important;
+            border-radius: 8px;
             padding: 0.6rem 1.2rem;
             font-weight: 800;
-            box-shadow: 0 4px 10px rgba(11, 58, 102, 0.22);
+            box-shadow: none;
         }
 
         div.stButton > button p,
@@ -212,9 +410,9 @@ def configure_page():
         }
 
         div.stButton > button:hover {
-            background: #145ea8 !important;
+            background: #334155 !important;
             color: #ffffff !important;
-            border: 1px solid #145ea8 !important;
+            border: 1px solid #334155 !important;
         }
 
         div.stButton > button:focus {
@@ -224,9 +422,9 @@ def configure_page():
         }
 
         div[data-testid="stFormSubmitButton"] button {
-            background: #0b3a66 !important;
+            background: #0f172a !important;
             color: #ffffff !important;
-            border: 1px solid #0b3a66 !important;
+            border: 1px solid #0f172a !important;
             font-weight: 800 !important;
         }
 
@@ -243,7 +441,7 @@ def configure_page():
         hr {
             border: none;
             height: 1px;
-            background: #dbeafe;
+            background: #cbd5e1;
             margin: 1.5rem 0;
         }
 
@@ -264,10 +462,10 @@ def configure_page():
         .user-chip {
             min-width: 220px;
             background: #ffffff;
-            border: 1px solid #dbeafe;
-            border-radius: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
             padding: 12px 14px;
-            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+            box-shadow: none;
             text-align: right;
         }
 
@@ -278,7 +476,7 @@ def configure_page():
         }
 
         .user-chip-role {
-            color: #1d4ed8;
+            color: #0f172a;
             font-size: 13px;
             font-weight: 700;
             margin-top: 2px;
@@ -302,7 +500,7 @@ def render_header(user_profile):
         <div class="top-bar">
             <div>
                 <h1>ENCHANTED Model 1: Right-Siting Decision Support Dashboard</h1>
-                <div style="font-size: 22px; color: #1f4e79; font-weight: 700;">
+                <div style="font-size: 22px; color: #334155; font-weight: 700;">
                     Rule-Based Screening, AI Risk Stratification and Right-Siting Review Support
                 </div>
             </div>
@@ -325,15 +523,15 @@ def render_header(user_profile):
     st.markdown(
         """
         <div style="
-            background: rgba(255, 255, 255, 0.92);
-            border: 1px solid #dbeafe;
-            border-left: 6px solid #2563eb;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-left: 6px solid #0f172a;
             padding: 18px 22px;
-            border-radius: 16px;
-            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+            border-radius: 8px;
+            box-shadow: none;
             margin-bottom: 20px;
         ">
-            <div style="font-size: 18px; font-weight: 700; color: #0b3a66;">
+            <div style="font-size: 18px; font-weight: 700; color: #0f172a;">
                 Acute-to-Community Hospital / Hospital-at-Home Right-Siting Support
             </div>
             <div style="font-size: 14px; color: #475569; margin-top: 6px;">
@@ -348,16 +546,16 @@ def render_header(user_profile):
     st.markdown(
         """
         <div style="display: flex; gap: 12px; margin-bottom: 18px; flex-wrap: wrap;">
-            <span style="background:#fee2e2; color:#7f1d1d; padding:8px 14px; border-radius:999px; font-weight:600;">
+            <span style="background:#fee2e2; color:#7f1d1d; border:1px solid #fecaca; padding:8px 14px; border-radius:8px; font-weight:700;">
                 Red: Rule-Based Exclusion
             </span>
-            <span style="background:#fef3c7; color:#78350f; padding:8px 14px; border-radius:999px; font-weight:600;">
+            <span style="background:#fef3c7; color:#78350f; border:1px solid #fde68a; padding:8px 14px; border-radius:8px; font-weight:700;">
                 Amber: Clinical Review Required
             </span>
-            <span style="background:#dcfce7; color:#14532d; padding:8px 14px; border-radius:999px; font-weight:600;">
+            <span style="background:#dcfce7; color:#14532d; border:1px solid #bbf7d0; padding:8px 14px; border-radius:8px; font-weight:700;">
                 Green: Potential Candidate
             </span>
-            <span style="background:#dbeafe; color:#1e3a8a; padding:8px 14px; border-radius:999px; font-weight:600;">
+            <span style="background:#e2e8f0; color:#0f172a; border:1px solid #cbd5e1; padding:8px 14px; border-radius:8px; font-weight:700;">
                 AI: Risk Stratification
             </span>
         </div>
@@ -400,25 +598,29 @@ def role_scope(shortlisted, user_profile):
 def render_metrics(role_scoped):
     """Render summary metrics for the cases visible to the current user."""
     metric_cols = st.columns(5)
-    metric_cols[0].metric("Role-Scoped Cases", len(role_scoped))
+    metric_cols[0].metric("Visible Cases", len(role_scoped))
     metric_cols[1].metric(
-        "Green",
+        "Green / Candidate",
         (role_scoped["rule_category"] == "Green - Potential Candidate").sum(),
     )
     metric_cols[2].metric(
-        "Amber",
+        "Amber / Review",
         (role_scoped["rule_category"] == "Amber - Review Required").sum(),
     )
-    metric_cols[3].metric("Red", (role_scoped["rule_category"] == "Red - No-Go").sum())
+    metric_cols[3].metric("Red / No-Go", (role_scoped["rule_category"] == "Red - No-Go").sum())
     metric_cols[4].metric(
-        "Pending Clinician",
+        "Clinician Queue",
         (role_scoped["workflow_status"] == "Pending Clinician").sum(),
     )
 
-    st.subheader("AI-Suggested Review Pathway Summary")
-    pathway_cols = st.columns(4)
+    st.subheader("Review Pathway Workload Summary")
+    st.caption(
+        "This summarizes where the currently visible cases should be reviewed next. "
+        "It is workflow guidance for triage and workload planning, not a final transfer decision."
+    )
+    pathway_cols = st.columns(5)
     pathway_cols[0].metric(
-        "CH Review",
+        "Community Hospital Review",
         (role_scoped["right_siting_recommendation"] == "Community Hospital review").sum(),
     )
     pathway_cols[1].metric(
@@ -426,15 +628,26 @@ def render_metrics(role_scoped):
         (role_scoped["right_siting_recommendation"] == "Hospital-at-Home review").sum(),
     )
     pathway_cols[2].metric(
-        "Continue Acute Care",
+        "Remain in Acute Care",
         (
             role_scoped["right_siting_recommendation"]
             == "Continue Acute Hospital care"
         ).sum(),
     )
     pathway_cols[3].metric(
-        "Pending CM",
+        "Needs Further Review",
+        (
+            role_scoped["right_siting_recommendation"]
+            == "Further clinical / nursing review required"
+        ).sum(),
+    )
+    pathway_cols[4].metric(
+        "Case Manager Queue",
         (role_scoped["workflow_status"] == "Pending CM").sum(),
+    )
+    st.info(
+        "Use this section to understand the next review destination: Community Hospital, "
+        "Hospital-at-Home, acute care continuation, or further clinical/nursing review."
     )
 
 
@@ -484,7 +697,7 @@ def split_tasks_for_user(role_scoped, user_profile):
 
 
 def render_task_table(data, empty_message):
-    """Render a compact task table for one task queue."""
+    """Render a compact task table using the same style as the patient list."""
     task_columns = [
         "patient_id",
         "encounter_id",
@@ -501,23 +714,7 @@ def render_task_table(data, empty_message):
         st.info(empty_message)
         return
 
-    st.dataframe(
-        data[visible_columns],
-        width="stretch",
-        hide_index=True,
-        column_config={
-            "patient_id": st.column_config.TextColumn("Patient ID"),
-            "encounter_id": st.column_config.TextColumn("Encounter ID"),
-            "ward": st.column_config.TextColumn("Ward"),
-            "age": st.column_config.NumberColumn("Age"),
-            "rule_category": st.column_config.TextColumn("Clinical Screening"),
-            "risk_band": st.column_config.TextColumn("Risk Band"),
-            "workflow_status": st.column_config.TextColumn("Status"),
-            "right_siting_recommendation": st.column_config.TextColumn(
-                "Right-Siting Recommendation"
-            ),
-        },
-    )
+    render_readable_table(data, visible_columns)
 
 
 def render_task_sections(role_scoped, user_profile):
@@ -574,30 +771,37 @@ def render_worklist_controls(shortlisted, role_scoped):
         format_func=lambda col: COLUMN_LABELS[col],
     )
 
-    with st.expander("Advanced filters"):
-        filter_cols = st.columns(5)
-        ward_filter = filter_cols[0].multiselect(
-            "Ward / Floor",
-            sorted(role_scoped["ward"].dropna().unique()),
-        )
-        status_filter = filter_cols[1].multiselect(
-            "Status",
-            sorted(role_scoped["workflow_status"].dropna().unique()),
-        )
-        risk_filter = filter_cols[2].multiselect(
-            "Risk Band",
-            sorted(role_scoped["risk_band"].dropna().unique()),
-        )
-        specialty_filter = filter_cols[3].multiselect(
-            "Specialty",
-            sorted(role_scoped["specialty"].dropna().unique()),
-        )
-        age_filter = filter_cols[4].slider(
-            "Age Range",
-            int(shortlisted["age"].min()),
-            int(shortlisted["age"].max()),
-            (int(shortlisted["age"].min()), int(shortlisted["age"].max())),
-        )
+    st.markdown(
+        """
+        <div class="filter-panel">
+            <div class="filter-panel-title">Advanced filters</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    filter_cols = st.columns(5)
+    ward_filter = filter_cols[0].multiselect(
+        "Ward / Floor",
+        sorted(role_scoped["ward"].dropna().unique()),
+    )
+    status_filter = filter_cols[1].multiselect(
+        "Status",
+        sorted(role_scoped["workflow_status"].dropna().unique()),
+    )
+    risk_filter = filter_cols[2].multiselect(
+        "Risk Band",
+        sorted(role_scoped["risk_band"].dropna().unique()),
+    )
+    specialty_filter = filter_cols[3].multiselect(
+        "Specialty",
+        sorted(role_scoped["specialty"].dropna().unique()),
+    )
+    age_filter = filter_cols[4].slider(
+        "Age Range",
+        int(shortlisted["age"].min()),
+        int(shortlisted["age"].max()),
+        (int(shortlisted["age"].min()), int(shortlisted["age"].max())),
+    )
 
     filtered_worklist = filter_worklist(
         role_scoped,
@@ -615,93 +819,88 @@ def render_worklist_controls(shortlisted, role_scoped):
     return filtered_worklist, selected_columns
 
 
+def format_table_value(value):
+    """Convert dataframe cell values into compact display text for HTML tables."""
+    if isinstance(value, float):
+        return f"{value:.2f}"
+
+    if is_list_like(value) and not isinstance(value, str):
+        values = [str(item) for item in value if str(item)]
+        return ", ".join(values) if values else "-"
+
+    if pd.isna(value):
+        return "-"
+
+    return str(value)
+
+
+def clinical_screening_badge(value):
+    """Return HTML for a color-coded clinical screening badge."""
+    value_text = format_table_value(value)
+
+    if value_text == "Green - Potential Candidate":
+        badge_class = "status-green"
+    elif value_text == "Amber - Review Required":
+        badge_class = "status-amber"
+    elif value_text == "Red - No-Go":
+        badge_class = "status-red"
+    else:
+        badge_class = "status-neutral"
+
+    return (
+        f'<span class="status-badge {badge_class}">'
+        f"{html.escape(value_text)}"
+        "</span>"
+    )
+
+
+def dataframe_to_readable_html(data):
+    """Build table HTML manually so selected columns can use custom badges."""
+    headers = [html.escape(str(column)) for column in data.columns]
+    header_html = "".join(f"<th>{header}</th>" for header in headers)
+
+    rows = []
+    for _, row in data.iterrows():
+        cells = []
+        for column, value in row.items():
+            if column == "Clinical Screening":
+                cell_value = clinical_screening_badge(value)
+            else:
+                cell_value = html.escape(format_table_value(value))
+            cells.append(f"<td>{cell_value}</td>")
+        rows.append(f"<tr>{''.join(cells)}</tr>")
+
+    return (
+        '<table class="readable-table">'
+        f"<thead><tr>{header_html}</tr></thead>"
+        f"<tbody>{''.join(rows)}</tbody>"
+        "</table>"
+    )
+
+
+def render_readable_table(data, selected_columns):
+    """Render a light HTML table instead of Streamlit's dark canvas dataframe."""
+    if data.empty:
+        st.markdown(
+            '<div class="table-empty">No patients match the current filters.</div>',
+            unsafe_allow_html=True,
+        )
+        return
+
+    display_df = data[selected_columns].copy()
+    display_df = display_df.rename(columns=COLUMN_LABELS)
+    table_html = dataframe_to_readable_html(display_df)
+
+    st.markdown(
+        f'<div class="readable-table-wrap">{table_html}</div>',
+        unsafe_allow_html=True,
+    )
+
+
 def render_worklist_table(filtered_worklist, role_scoped, selected_columns):
     """Render the interactive patient list table with selected columns."""
     if selected_columns:
-        style_subset = [
-            col
-            for col in ["rule_category", "ai_recommendation"]
-            if col in selected_columns
-        ]
-        styled_df = filtered_worklist[selected_columns].style
-
-        if style_subset:
-            styled_df = styled_df.map(colour_rule_category, subset=style_subset)
-
-        st.dataframe(
-            styled_df,
-            width="stretch",
-            hide_index=True,
-            column_config={
-                "patient_id": st.column_config.TextColumn("Patient ID", width="medium"),
-                "encounter_id": st.column_config.TextColumn(
-                    "Encounter ID",
-                    width="medium",
-                ),
-                "ward": st.column_config.TextColumn("Ward / Floor", width="small"),
-                "specialty": st.column_config.TextColumn("Specialty", width="medium"),
-                "age": st.column_config.NumberColumn("Age", width="small"),
-                "los_days": st.column_config.NumberColumn(
-                    "Days in Hospital",
-                    width="small",
-                ),
-                "days_to_edd": st.column_config.NumberColumn(
-                    "Days to EDD",
-                    width="small",
-                ),
-                "rule_category": st.column_config.TextColumn(
-                    "Clinical Screening",
-                    width="large",
-                ),
-                "red_flags": st.column_config.ListColumn("Red Flags", width="large"),
-                "amber_flags": st.column_config.ListColumn(
-                    "Amber Flags",
-                    width="large",
-                ),
-                "risk_score": st.column_config.NumberColumn(
-                    "Risk Score",
-                    width="small",
-                    format="%.2f",
-                ),
-                "risk_band": st.column_config.TextColumn("Risk Band", width="medium"),
-                "workflow_status": st.column_config.TextColumn(
-                    "Status",
-                    width="medium",
-                ),
-                "service_need": st.column_config.TextColumn(
-                    "Service Need",
-                    width="large",
-                ),
-                "service_suitability": st.column_config.TextColumn(
-                    "Service Suitability",
-                    width="large",
-                ),
-                "nursing_status": st.column_config.TextColumn(
-                    "Nursing Assessment",
-                    width="large",
-                ),
-                "nursing_flags": st.column_config.ListColumn(
-                    "Nursing Flags",
-                    width="large",
-                ),
-                "patient_acceptance_likelihood": st.column_config.TextColumn(
-                    "Acceptance Likelihood",
-                    width="medium",
-                ),
-                "counselling_required": st.column_config.TextColumn(
-                    "Counselling Required",
-                    width="medium",
-                ),
-                "right_siting_recommendation": st.column_config.TextColumn(
-                    "Right-Siting Recommendation",
-                    width="large",
-                ),
-                "ai_recommendation": st.column_config.TextColumn(
-                    "AI Recommendation",
-                    width="large",
-                ),
-            },
-        )
+        render_readable_table(filtered_worklist, selected_columns)
     else:
         st.warning("Select at least one column to display.")
 

@@ -92,15 +92,22 @@ def render_auth_gate():
 
         return _profile_from_oauth_user()
 
+    if "user_profile" in st.session_state:
+        return st.session_state["user_profile"]
+
     st.title("ENCHANTED Model 1")
     st.caption("Prototype login. Use hospital ID validation until OAuth secrets are configured.")
 
-    with st.form("hospital_id_login"):
-        hospital_id = st.text_input(
-            "Hospital ID",
-            placeholder="Example: HOSP-CM-001, HOSP-REF-001, HOSP-CLN-001",
-        )
-        submitted = st.form_submit_button("Continue")
+    with st.container(border=True):
+        st.subheader("Hospital Login")
+        st.caption("Enter a valid hospital ID to access the dashboard.")
+
+        with st.form("hospital_id_login"):
+            hospital_id = st.text_input(
+                "Hospital ID",
+                placeholder="Example: HOSP-CM-001, HOSP-REF-001, HOSP-CLN-001",
+            )
+            submitted = st.form_submit_button("Continue")
 
     if submitted:
         normalised_id = hospital_id.strip().upper()
@@ -113,13 +120,8 @@ def render_auth_gate():
         else:
             st.error("Hospital ID not recognised for this prototype.")
 
-    if "user_profile" not in st.session_state:
-        st.info(
-            "Demo IDs: HOSP-CM-001, HOSP-CM-002, HOSP-REF-001, HOSP-CLN-001."
-        )
-        st.stop()
-
-    return st.session_state["user_profile"]
+    st.info("Demo IDs: HOSP-CM-001, HOSP-CM-002, HOSP-REF-001, HOSP-CLN-001.")
+    st.stop()
 
 
 def logout_user():
